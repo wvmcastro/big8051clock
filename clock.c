@@ -124,8 +124,8 @@ void clockMode()
 	{
 		void updateTime();
 		printf_fast_f("BIG8051 CLOCK\n");
-		printf_fast_f("%d : %d : %d", time[HR], time[MIN], time[SEC]);
-		printf_fast_f("%d/%d/%d", date[DAY], date[MON], date[YEAR]);
+		printf_fast_f("%d : %d : %d\n", time[HR], time[MIN], time[SEC]);
+		printf_fast_f("%d/%d/%d\n", date[DAY], date[MON], date[YEAR]);
 		if(modePress) stay = 0;
 	}
 	setAlarmMode();
