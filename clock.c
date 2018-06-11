@@ -36,6 +36,7 @@ unsigned char time[3];
 unsigned char readKey()
 {
 	// returns which key is being pressed
+	// some button is being pressed
 	if (P0 != 0xFF)
 	{
 		if (!MODEBUTTON) return MODE;
@@ -88,12 +89,13 @@ void setTimeDateMode()
 	__bit timeOrDate;
 	timeOrDate = TIME;
 	param = SEC;
+	bool stay = 1;
 
 	// Stays in set-time-date-mode while user doesn't press Mode to confirm
-	while(1)
+	while(stay)
 	{
 		blink(param);
-		if (selectPress)
+		if(selectPress)
 		{
 			if(param == HR && timeOrDate == TIME)
 			{
@@ -108,7 +110,7 @@ void setTimeDateMode()
 			else
 				param++;
 		}
-		if (incrementPress)
+		if(incrementPress)
 		{
 			if(timeOrDate == TIME)
 			{
@@ -123,12 +125,13 @@ void setTimeDateMode()
 					if(param == YEAR) adjust = incrementDate(&date[YEAR], 65535, 0);
 			}
 		}
-		if (modePress)
+		if(modePress)
 		{
-			clockMode();
+			stay = 0;
 		}
-
 	}
+	// stay = 0 => go to next mode
+	clockMode();
 }
 
 /*
