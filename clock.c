@@ -77,17 +77,15 @@ void isrTimer2() __interrupt 5
 
 }
 
-//adaptar para usar incrementTime e incrementDate
 void setTimeDateMode()
 {
 	//Sets the parameter of choice
 	//Select Button: cycles through parameters
 	//Increment Button: increments the current parameter
-	//Mode Button: confirms current parameters and exists this mode
+	//Mode Button: confirms current parameters and exits this mode
 
-	unsigned char param;
+	unsigned char param, adjust;
 	__bit timeOrDate;
-
 	timeOrDate = TIME;
 	param = SEC;
 
@@ -112,7 +110,18 @@ void setTimeDateMode()
 		}
 		if (incrementPress)
 		{
-			incrementParam(timeOrDate, param);
+			if(timeOrDate == TIME)
+			{
+				if(param == SEC) adjust = incrementTime(&time[SEC], 60);
+				if(param == MIN) adjust = incrementTime(&time[MIN], 60);
+				if(param == HR) adjust = incrementTime(&time[HR], 24);
+			}
+			if(timeOrDate == DATE)
+			{
+					if(param = DAY) adjust = = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
+					if(param == MON) adjust = incrementDate(&date[MON], 12, 1);
+					if(param == YEAR) adjust = incrementDate(&date[YEAR], 65535, 0);
+			}
 		}
 		if (modePress)
 		{
@@ -141,16 +150,16 @@ void incrementParam(__bit timeOrDate, unsigned char param)
 			if(date[MON] == 12)
 				date[MON] = 1;
 			else
-				date[MON] += 1; 
+				date[MON] += 1;
 		}
 		if(param == YEAR)
 		{
 			date[YEAR] += 1;
 			getDays(date[YEAR], monthDays);
 		}
-		
+
 	}
-	else 
+	else
 	{
 		if(param == HR)
 		{
@@ -175,6 +184,6 @@ void incrementParam(__bit timeOrDate, unsigned char param)
 		}
 
 	}
-		
+
 }
 */
