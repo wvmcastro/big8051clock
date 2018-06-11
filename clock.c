@@ -3,35 +3,17 @@
 #include "delay.c"
 #include "glcd.c"
 #include "eeprom.c"
+#include "defines.h"
+#include "timer.c"
 
-/*
-#define YEAR 2
-#define MON 1
-#define DAY 0
+//------------------------------- function headers -------------------------------
+unsigned char readKey();
+void isrTimer2();
+void setTimeDateMode();
+void clockMode();
+void setAlarmMode()
+//--------------------------------------------------------------------------------
 
-#define HR 2
-#define MIN 1
-#define SEC 0
-
-#define TIME 0
-#define DATE 1
-
-#define MODEBUTTON P0_0
-#define SELECTBUTTON P0_1
-#define INCREMENTBUTTON P0_2
-
-#define MODE 0
-#define SELECT 1
-#define INCREMENT 2
-
-__bit modePress;
-__bit selectPress;
-__bit incrementPress;
-__bit state;
-
-unsigned int date[3];
-unsigned char time[3];
-*/
 
 unsigned char readKey()
 {
@@ -132,6 +114,26 @@ void setTimeDateMode()
 	}
 	// stay = 0 => go to next mode
 	clockMode();
+}
+
+void clockMode()
+{
+	// Displays current time and date; "default" mode
+	bool stay = 1;
+	while(stay)
+	{
+		void updateTime();
+		printf_fast_f("BIG8051 CLOCK\n");
+		printf_fast_f("%d : %d : %d", time[HR], time[MIN], time[SEC]);
+		printf_fast_f("%d/%d/%d", date[DAY], date[MON], date[YEAR]);
+		if(modePress) stay = 0;
+	}
+	setAlarmMode();
+}
+
+void setAlarmMode()
+{
+
 }
 
 /*
