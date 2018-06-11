@@ -133,7 +133,9 @@ void clockMode()
 
 void setAlarmMode()
 {
-
+	// definir padrão de representação de hora-data na eeprom
+	// definir padrão de uso das posições da eeprom
+	// usar esc_eeprom, colocar verificação em clockMode caso horário bata com o do alarme
 }
 
 /*
