@@ -1,6 +1,6 @@
-ifndef __DEFINES__
+#ifndef __DEFINES__
     #include "defines.h"
-endif
+#endif
 
 #define __TIMER__
 
@@ -10,11 +10,11 @@ endif
 // TC0
 
 // ----------------------------- function headers --------------------------------------
-//Initializes the TC3 in auto reload mode and sets TMR3H and TMR3L in a way
-//that the overflow will occur at each 20ms with SYSCLK/12
-void initTimer3(void);
+// Initializes the TC0 in mode 1 and sets TH0 and TL0 in a way
+// that the overflow will occur at each 1ms with SYSCLK = 25MHz
+void initTimer0(void);
 
-void isrTimer3(void) __interrupt 13;
+void isrTimer0(void) __interrupt 1;
 
 // Copies the date, time and monthDays vector addresses for the _date, _time
 // and _monthDays pointers
@@ -27,42 +27,40 @@ unsigned int incrementDate(unsigned int *value, unsigned int limit, unsigned int
 void updateTime();
 
 //----------------------------------------------------------------------------------------
-void initTimer3(void)
+void initTimer0(void)
 {
-    //Initializes the TC3 in auto reload mode and sets TMR3H and TMR3L in a way
-    //that the overflow will occur at each 20ms with SYSCLK/12
+    //Initializes the TC0 in mode 1 and sets TH0 and TL0 in a way
+    //that the overflow will occur at each 1ms with SYSCLK = 25MHz
 
-    // Change the page so it can use TMR3CN register
-    SFRPAGE = TMR3_PAGE;
+    //Sets the TCO mode as 1
+    TMOD |= 0x01;   #M0.0 = 1;
+    TMOD &= ~0x02;  #M1.0 = 0;
 
-    // Sets TC3 in auto-reload mode
-    TMR3CN &= ~0x01;
+    //Sets the overflow flag as 0 for ensurance
+    TF0 = 0;
 
-    // Sets TC3 initial values
-    TMR3H = 0x5D;
-    TMR3L = 0x3E;
+    //Loads the initial value
+    TH0 = 0x9E;
+    TL0 = 0x58;
 
-    // Uses the same values above as reload values
-    RCAP3H = 0x5D;
-    RCAP3L = 0x3E;
-
-    // Enables TC3
-    TR3 = 1;
-
-    //Change back to LEGACY_PAGE
-    SFRPAGE = LEGACY_PAGE;
+    //Starts the timer
+    TR0 = 1;
 }
 
-void isrTimer3(void) __interrupt 13
+void isrTimer0(void) __interrupt 1
 {
-    // Change to TMR3_PAGE
-    SFRPAGE = TMR3_PAGE;
-
     //Sets the overflow tag to 0
-    TF4 = 0;
+    TF0 = 0;
 
-    // Change back to LEGACY_PAGE
-    SFRPAGE = LEGACY_PAGE;
+    //Stops the timer
+    TR0 = 1
+
+    //Reloads the timer
+    TH0 = 0x9E;
+    TL0 = 0x58;
+
+    //Starts the timer again
+    TR0 = 1;
 
     //Calls the update time function to increment the time counter variable
     updateTime();
@@ -75,7 +73,7 @@ void updateTime()
     //Flag to increment time if occurs overflow in some measure
     increment = 0;
 
-    mills += 20;
+    mills += 1;
 
     if(mills == 1000)
     {

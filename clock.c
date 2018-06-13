@@ -4,7 +4,10 @@
 #include "glcd.c"
 #include "eeprom.c"
 #include "defines.h"
-#include "timer.c"
+
+#ifndef __TIMER__
+	#include "timer.c"
+#endif
 
 //------------------------------- function headers -------------------------------
 unsigned char readKey();
