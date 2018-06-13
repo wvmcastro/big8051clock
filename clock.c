@@ -107,7 +107,12 @@ void setTimeDateMode()
 			{
 					if(param = DAY) adjust = = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
 					if(param == MON) adjust = incrementDate(&date[MON], 12, 1);
-					if(param == YEAR) adjust = incrementDate(&date[YEAR], 65535, 0);
+					if(param == YEAR)
+					{
+						adjust = incrementDate(&date[YEAR], 65535, 0);
+						getDays(date[YEAR], monthDays);
+					}
+
 			}
 		}
 		if(modePress)

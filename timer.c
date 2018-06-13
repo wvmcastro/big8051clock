@@ -2,7 +2,11 @@
     #include "defines.h"
 #endif
 
-#define __TIMER__
+#ifndef __SET_DAYS__
+    #include __SET_DAYS__
+#endif
+
+#define _timeR__
 
 // TFx hardware overflow tag
 // TRx enables os disables the timer
@@ -10,15 +14,11 @@
 // TC0
 
 // ----------------------------- function headers --------------------------------------
-// Initializes the TC0 in mode 1 and sets TH0 and TL0 in a way
-// that the overflow will occur at each 1ms with SYSCLK = 25MHz
-void initTimer0(void);
+//Initializes the TC3 in auto reload mode and sets TMR3H and TMR3L in a way
+//that the overflow will occur at each 20ms with SYSCLK/12
+void initTimer3(void);
 
-void isrTimer0(void) __interrupt 1;
-
-// Copies the date, time and monthDays vector addresses for the _date, _time
-// and _monthDays pointers
-void setGlobals(unsigned int *date, unsigned char *time, unsigned char *monthDays);
+void isrTimer3(void) __interrupt 13;
 
 unsigned char incrementTime(unsigned char *value, unsigned char limit);
 unsigned int incrementDate(unsigned int *value, unsigned int limit, unsigned int rst);
@@ -27,40 +27,42 @@ unsigned int incrementDate(unsigned int *value, unsigned int limit, unsigned int
 void updateTime();
 
 //----------------------------------------------------------------------------------------
-void initTimer0(void)
+void initTimer3(void)
 {
-    //Initializes the TC0 in mode 1 and sets TH0 and TL0 in a way
-    //that the overflow will occur at each 1ms with SYSCLK = 25MHz
+    //Initializes the TC3 in auto reload mode and sets TMR3H and TMR3L in a way
+    //that the overflow will occur at each 20ms with SYSCLK/12
 
-    //Sets the TCO mode as 1
-    TMOD |= 0x01;   #M0.0 = 1;
-    TMOD &= ~0x02;  #M1.0 = 0;
+    // Change the page so it can use TMR3CN register
+    SFRPAGE = TMR3_PAGE;
 
-    //Sets the overflow flag as 0 for ensurance
-    TF0 = 0;
+    // Sets TC3 in auto-reload mode
+    TMR3CN &= ~0x01;
 
-    //Loads the initial value
-    TH0 = 0x9E;
-    TL0 = 0x58;
+    // Sets TC3 initial values
+    TMR3H = 0x5D;
+    TMR3L = 0x3E;
 
-    //Starts the timer
-    TR0 = 1;
+    // Uses the same values above as reload values
+    RCAP3H = 0x5D;
+    RCAP3L = 0x3E;
+
+    // Enables TC3
+    TR3 = 1;
+
+    //Change back to LEGACY_PAGE
+    SFRPAGE = LEGACY_PAGE;
 }
 
-void isrTimer0(void) __interrupt 1
+void isrTimer3(void) __interrupt 13
 {
+    // Change to TMR3_PAGE
+    SFRPAGE = TMR3_PAGE;
+
     //Sets the overflow tag to 0
-    TF0 = 0;
+    TF4 = 0;
 
-    //Stops the timer
-    TR0 = 1
-
-    //Reloads the timer
-    TH0 = 0x9E;
-    TL0 = 0x58;
-
-    //Starts the timer again
-    TR0 = 1;
+    // Change back to LEGACY_PAGE
+    SFRPAGE = LEGACY_PAGE;
 
     //Calls the update time function to increment the time counter variable
     updateTime();
@@ -73,41 +75,46 @@ void updateTime()
     //Flag to increment time if occurs overflow in some measure
     increment = 0;
 
-    mills += 1;
+    mills += 20;
 
     if(mills == 1000)
     {
         mills = 0;
 
         //Increments seconds
-        increment = incrementTime(&_time[SEC], 60);
+        increment = incrementTime(&time[SEC], 60);
 
         //Increments minutes
-        if(increment) increment = incrementTime(&_time[MIN], 60);
+        if(increment) increment = incrementTime(&time[MIN], 60);
 
         //Increments hours
-        if(increment) increment = incrementTime(&_time[HR], 24);
+        if(increment) increment = incrementTime(&time[HR], 24);
 
         //Increment days
-        if(increment) increment = incrementDate(&_date[DAY], _monthDays[_date[MON]-1], 0);
+        if(increment) increment = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
 
         //Increment month
-        if(increment) increment = incrementDate(&_date[MON], 12, 1);
+        if(increment) increment = incrementDate(&date[MON], 12, 1);
 
         //Increment year
-        if(increment) increment = incrementDate(&_date[YEAR], 65535, 0);
+        if(increment)
+        {
+            increment = incrementDate(&date[YEAR], 65535, 0);
+            getDays(date[YEAR], monthDays)
+
+        }
 
     }
 }
 
 void setGlobals(unsigned int *date, unsigned char *time, unsigned char *monthDays)
 {
-    //Copies the date, time and monthDays vector addresses for the _date, _time
-    //and _monthDays pointers
+    //Copies the date, time and monthDays vector addresses for the date, time
+    //and monthDays pointers
 
-    _date = date;
-    _time = time;
-    _monthDays = monthDays;
+    date = date;
+    time = time;
+    monthDays = monthDays;
 }
 
 unsigned char incrementTime(unsigned char *value, unsigned char limit)

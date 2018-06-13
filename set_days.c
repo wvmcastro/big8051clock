@@ -1,4 +1,4 @@
-#include <stdio.h>
+#define __SET_DAYS__
 
 void getDays(unsigned int year, unsigned int *yearVector)
 {
