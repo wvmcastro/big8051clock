@@ -42,4 +42,9 @@ __bit state = 0;
 volatile unsigned int date[3] = {1, 1, 2000};
 volatile unsigned char time[3];
 volatile unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+#define AL_YEARH 6
+#define AL_YEARL 5
+#define AL_MON 4
+#define AL_DAY 3
 // -----------------------------------------------------------------------------

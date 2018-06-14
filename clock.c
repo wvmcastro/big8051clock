@@ -92,7 +92,7 @@ void setTimeDateMode()
 	__bit timeOrDate, stay;
 	timeOrDate = TIME;
 	param = SEC;
-	
+
 	stay = 1;
 	// Stays in set-time-date-mode while user doesn't press Mode to confirm
 	while(stay)
@@ -156,8 +156,6 @@ void clockMode()
 		delay_ms(200);
 		printf_fast_f("\x02 %d", mills+80);
 
-
-
 		if(modePress) stay = 0;
 	}
 	// stay = 0 => go to next mode
@@ -166,6 +164,44 @@ void clockMode()
 
 void setAlarmMode()
 {
+	// Sets an alarm and saves it to eeprom memory
+	unsigned int end_mem;
+	int ret;
+	unsigned char param = SEC;
+	__bit timeOrDate, stay = 0;
+
+	// At first, takes the currently saved alarm and displays it
+	// OBS: last iteration copies only LOW part of the YEAR
+	for(end_mem = 0; end_mem < 6; end_mem++)
+	{
+		alarm[param] = le_eeprom(END_EEPROM, end_mem);
+		param++;
+	}
+	// Copying the HIGH part of the YEAR
+	alarm[param] = le_eeprom(END_EEPROM, end_mem)/256;
+
+	while(stay)
+	{
+		///////////////////////////////////////////////////////////////////////
+		//blink(param);
+		if(selectPress)
+		{
+			if (param > AL_YEARH)
+			{
+
+			}
+		}
+
+		if(incrementPress)
+		{
+
+		}
+		///////////////////////////////////////////////////////////////////////////
+
+		if(modePress) stay = 0;
+	}
+	setTimeDateMode();
+
 	// definir padrão de representação de hora-data na eeprom
 	// definir padrão de uso das posições da eeprom
 	// usar esc_eeprom, colocar verificação em clockMode caso horário bata com o do alarme
@@ -228,24 +264,24 @@ void incrementParam(__bit timeOrDate, unsigned char param)
 }*/
 
 int main(void)
-{	
+{
 	Init_Device();
 	SFRPAGE = LEGACY_PAGE;
 
 	Ini_glcd();
 	limpa_glcd(ESQ);
 	limpa_glcd(DIR);
-	
+
 	initTimer3();
 
 	while(1)
 	{
-		clockMode();	
+		clockMode();
 	}
-	
+
 
 	return 0;
 
 
-	
+
 }
