@@ -1,9 +1,28 @@
-#include "def_pinos.h"
-#include "config.c"
-#include "delay.c"
-#include "glcd.c"
-#include "eeprom.c"
-#include "defines.h"
+#ifndef __DEF_PINOS__
+	#define __DEF_PINOS__
+	#include "def_pinos.h"
+#endif
+
+#ifndef __CONFIG__
+	#define __CONFIG__
+	#include "config.c"
+#endif
+
+#ifndef __DELAY__
+	#include "delay.c"
+#endif
+
+#ifndef __GLCD__
+	#include "glcd.c"
+#endif
+
+
+//#include "eeprom.c"
+
+
+#ifndef __DEFINES__
+	#include "defines.h"
+#endif
 
 #ifndef __TIMER__
 	#include "timer.c"
@@ -11,10 +30,10 @@
 
 //------------------------------- function headers -------------------------------
 unsigned char readKey();
-void isrTimer2();
+void isrTimer2() __interrupt 5;
 void setTimeDateMode();
 void clockMode();
-void setAlarmMode()
+void setAlarmMode();
 //--------------------------------------------------------------------------------
 
 
@@ -29,21 +48,20 @@ unsigned char readKey()
 		if (!INCREMENTBUTTON) return INCREMENT;
 	}
 	// no button is being pressed
-	else
-		return 21;
+	return 21;
 }
 
 void isrTimer2() __interrupt 5
 {
 	// Polling: checks if buttons are being pressed
 
-	unsigned char key;
+	unsigned char key = 21;
 
 	// Sets overflow flag to 0
 	TF2 = 0;
 
 	// If no button is being pressed, state is 0
-	if(PO == 0xFF)
+	if(P0 == 0xFF)
 		state = 0;
 
 	// If state is 0, check if a key is being pressed
@@ -71,15 +89,15 @@ void setTimeDateMode()
 	//Mode Button: confirms current parameters and exits this mode
 
 	unsigned char param, adjust;
-	__bit timeOrDate;
+	__bit timeOrDate, stay;
 	timeOrDate = TIME;
 	param = SEC;
-	bool stay = 1;
-
+	
+	stay = 1;
 	// Stays in set-time-date-mode while user doesn't press Mode to confirm
 	while(stay)
 	{
-		blink(param);
+		//blink(param);
 		if(selectPress)
 		{
 			if(param == HR && timeOrDate == TIME)
@@ -105,7 +123,7 @@ void setTimeDateMode()
 			}
 			if(timeOrDate == DATE)
 			{
-					if(param = DAY) adjust = = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
+					if(param == DAY) adjust  = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
 					if(param == MON) adjust = incrementDate(&date[MON], 12, 1);
 					if(param == YEAR)
 					{
@@ -127,15 +145,22 @@ void setTimeDateMode()
 void clockMode()
 {
 	// Displays current time and date; "default" mode
-	bool stay = 1;
+	__bit stay = 1;
+	printf_fast_f("\x01 BIG8051 CLOCK");
 	while(stay)
 	{
-		void updateTime();
-		printf_fast_f("BIG8051 CLOCK\n");
-		printf_fast_f("%d : %d : %d\n", time[HR], time[MIN], time[SEC]);
-		printf_fast_f("%d/%d/%d\n", date[DAY], date[MON], date[YEAR]);
+		//updateTime();
+		//printf_fast_f("\x02 %2d : %2d : %2d", time[HR], time[MIN], time[SEC]);
+		//printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+		printf_fast_f("\x02 %2d : %2d", TMR3H, TMR3L);
+		delay_ms(200);
+		printf_fast_f("\x02 %d", mills+80);
+
+
+
 		if(modePress) stay = 0;
 	}
+	// stay = 0 => go to next mode
 	setAlarmMode();
 }
 
@@ -200,5 +225,27 @@ void incrementParam(__bit timeOrDate, unsigned char param)
 
 	}
 
+}*/
+
+int main(void)
+{	
+	Init_Device();
+	SFRPAGE = LEGACY_PAGE;
+
+	Ini_glcd();
+	limpa_glcd(ESQ);
+	limpa_glcd(DIR);
+	
+	initTimer3();
+
+	while(1)
+	{
+		clockMode();	
+	}
+	
+
+	return 0;
+
+
+	
 }
-*/

@@ -1,5 +1,9 @@
 #define __SET_DAYS__
 
+#ifndef __DEFINES__
+	#include "defines.h"
+#endif
+
 void getDays(unsigned int year, unsigned int *yearVector)
 {
     /* Sets 28 or 29 days for february in the yearVector according
@@ -19,7 +23,7 @@ void getDays(unsigned int year, unsigned int *yearVector)
     else yearVector[1] = 28;
 }
 
-int main(void)
+/*int main(void)
 {
     unsigned int monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     unsigned int i, year;
@@ -31,4 +35,4 @@ int main(void)
         printf("\n");
     }
     return 0;
-}
+}*/

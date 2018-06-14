@@ -1,12 +1,8 @@
-#ifndef __DEFINES__
-    #define __DEFINES__
-#endif
+#define __DEFINES__
+
 
 // ------------------- Timer defines ----------------------
 unsigned int mills = 0;
-unsigned int *_date;
-unsigned char *_time;
-unsigned char *_monthDays;
 // --------------------------------------------------------
 
 // -------------------------- Caio defines -------------------------------------
@@ -29,12 +25,12 @@ unsigned char *_monthDays;
 #define SELECT 1
 #define INCREMENT 2
 
-__bit modePress;
-__bit selectPress;
-__bit incrementPress;
-__bit state;
+volatile __bit modePress = 0;
+volatile __bit selectPress = 0;
+volatile __bit incrementPress = 0;
+__bit state = 0;
 
-unsigned int date[3];
-unsigned char time[3];
-unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+volatile unsigned int date[3] = {1, 1, 2000};
+volatile unsigned char time[3];
+volatile unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 // -----------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+#define __GLCD__
+
 #include <stdio.h>
 
 #ifndef __DEF_PINOS__
