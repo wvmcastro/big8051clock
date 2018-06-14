@@ -5,6 +5,15 @@
 unsigned int mills = 0;
 // --------------------------------------------------------
 
+// ------------------ Eeprom defines ----------------------
+#define SDA P9_0
+#define SCL P0_1
+
+#define WRITE       0
+#define READ        1
+#define END_EEPROM  0xA0
+// --------------------------------------------------------
+
 // -------------------------- Caio defines -------------------------------------
 #define YEAR 2
 #define MON 1
