@@ -29,11 +29,12 @@ volatile unsigned char time[3];
 volatile unsigned int alarm[6];
 volatile unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-
-#define AL_YEAR 5
-#define AL_MON 4
-#define AL_DAY 3
-
+__bit alarmOn = 0;
+#define AL_YEAR 4
+#define AL_MON 3
+#define AL_DAY 2
+#define AL_HR 1
+#define AL_MIN 0
 // -----------------------------------------------------------------------------
 
 // ------------------ Button defines ------------------
