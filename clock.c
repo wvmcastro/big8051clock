@@ -215,7 +215,7 @@ void clockMode()
 				{
 					P2_7 = 0;
 				}
-				i++;
+				if(blink) i++;
 			}
 		}
 
@@ -249,7 +249,9 @@ void setAlarmMode()
 	while(stay)
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
-		printf_fast_f("\x01 SET ALARM");
+		if(alarmOn) printf_fast_f("\x01 SET ALARM | on");
+		else printf_fast_f("\x01 SET ALARM | off")
+
 		blink = blink();
 		if(blink == 0 || cycling = 0)
 		{
