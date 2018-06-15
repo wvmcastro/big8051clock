@@ -1,12 +1,13 @@
 #define __DEFINES__
 
 // ------------------ Eeprom defines ----------------------
-#define SDA P9_0
+#define SDA P0_0
 #define SCL P0_1
 
-#define WRITE       0
-#define READ        1
-#define END_EEPROM  0xA0
+#define WRITE           0
+#define READ            1
+#define EEPROM_ADDRESS  0xA0
+#define MEM_ADDRESS     0x08
 // --------------------------------------------------------
 
 // ------------------------- Time-Date Managing defines -----------------------------
@@ -51,6 +52,3 @@ volatile __bit incrementPress = 0;
 __bit state = 0;
 
 // ----------------------------------------------------
-
-
-
