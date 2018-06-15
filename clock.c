@@ -97,7 +97,45 @@ void setTimeDateMode()
 	// Stays in set-time-date-mode while user doesn't press Mode to confirm
 	while(stay)
 	{
-		//blink(param);
+		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
+		printf_fast_f("\x01 SET TIME OR DATE");
+		blink = blink();
+		if(blink == 0)
+		{
+			printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+			printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+		}
+		else
+		{
+			switch(param)
+			{
+				case HR:
+					printf_fast_f("\x02   :%2d:%2d", time[MIN], time[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+				case MIN:
+					printf_fast_f("\x02 %2d:  :%2d", time[HR], time[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+				case SEC:
+					printf_fast_f("\x02 %2d:%2d:  ", time[HR], time[MIN]);
+					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+				case DAY:
+					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x03   /%2d/%4d", date[MON], date[YEAR]);
+				case MON:
+					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x03 %2d/  /%4d", date[DAY], date[YEAR]);
+				case YEAR:
+					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x03 %2d/%2d/    ", date[DAY], date[MON]);
+				default:
+					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+			}
+
+		}
+		// -------------------------------------------------------------------------------------------------
+
+
 		if(selectPress)
 		{
 			if(param == HR && timeOrDate == TIME)
@@ -112,6 +150,8 @@ void setTimeDateMode()
 			}
 			else
 				param++;
+
+			selectPress = 0;
 		}
 		if(incrementPress)
 		{
@@ -132,10 +172,12 @@ void setTimeDateMode()
 					}
 
 			}
+			incrementPress = 0;
 		}
 		if(modePress)
 		{
 			stay = 0;
+			modePress = 0;
 		}
 	}
 	// stay = 0 => go to next mode
@@ -145,7 +187,9 @@ void setTimeDateMode()
 void clockMode()
 {
 	// Displays current time and date; "default" mode
-	__bit stay = 1;
+	__bit blink, stay = 1;
+	unsigned char i;
+
 	printf_fast_f("\x01 BIG8051 CLOCK");
 	while(stay)
 	{
@@ -153,13 +197,33 @@ void clockMode()
 		printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
 		printf_fast_f("\x04  ");
 
-
-		/*if(alarmSignal)
+		// Checks if current time and date matches alarm time and date
+		if(alarmOn && time[SEC] == 0 && alarm[AL_MIN] == time[MIN]
+		&& alarm[AL_HR] == time[HR]  && alarm[AL_DAY] == date[DAY]
+		&& alarm[AL_MON] == date[MON] && alarm[AL_YEAR] == date[YEAR])
 		{
-			printf_fast_f("\x04 ALARM");
-		}*/
-	
-		if(modePress) stay = 0;
+			// Buzzes for 3 seconds
+			i = 0;
+			while(i <= 35)
+			{
+				blink = blink();
+				if (blink && i%10 = 0)
+				{
+					P2_7 = 1;
+				}
+				if (i%10 != 0 && i%5 = 0)
+				{
+					P2_7 = 0;
+				}
+				i++;
+			}
+		}
+
+		if(modePress)
+		{
+				stay = 0;
+				modePress = 0;
+		}
 	}
 	// stay = 0 => go to next mode
 	setAlarmMode();
@@ -169,90 +233,101 @@ void setAlarmMode()
 {
 	// Sets an alarm and saves it to eeprom memory
 	unsigned int end_mem;
-	int ret;
 	unsigned char param, adjust;
-	__bit timeOrDate, stay = 0;
+	__bit cycling, stay = 0;
 
-	// At first, takes the currently saved alarm and displays it
-	// OBS: last iteration copies only LOW part of the YEAR
-	for(end_mem = 0; end_mem < 6; end_mem++)
+	// At first, takes the currently saved alarm to display it
+
+	param = AL_MIN;
+	for(end_mem = 0; end_mem < 5; end_mem++)
 	{
 		alarm[param] = le_eeprom(END_EEPROM, end_mem);
 		param++;
 	}
 
-	// Copying the HIGH part of the YEAR
-	alarm[param] = le_eeprom(END_EEPROM, end_mem)/256;
-
-	param = SEC;
+	param = AL_MIN;
 	while(stay)
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
 		printf_fast_f("\x01 SET ALARM");
 		blink = blink();
-		if(blink == 0)
+		if(blink == 0 || cycling = 0)
 		{
-			printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+			printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
 			printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 		}
-		else
+		else if(cycling)
 		{
 			switch(param)
 			{
-				case SEC:
-					printf_fast_f("\x02   :%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+				case AL_HR:
+					printf_fast_f("\x02   :%2d", alarm[AL_MIN]);
 					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
-				case MIN:
-					printf_fast_f("\x02 %2d:  :%2d", alarm[HR], alarm[MIN], alarm[SEC]);
-					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
-				case HR:
-					printf_fast_f("\x02 %2d:%2d:  ", alarm[HR], alarm[MIN], alarm[SEC]);
+				case AL_MIN:
+					printf_fast_f("\x02 %2d:  ", alarm[AL_HR]);
 					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 				case AL_DAY:
-					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
-					printf_fast_f("\x03   /%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x03   /%2d/%4d", alarm[AL_MON], alarm[AL_YEAR]);
 				case AL_MON:
-					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
-					printf_fast_f("\x03 %2d/  /%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x03 %2d/  /%4d", alarm[AL_DAY], alarm[AL_YEAR]);
 				case AL_YEAR:
-					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
-					printf_fast_f("\x03 %2d/%2d/    ", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x03 %2d/%2d/    ", alarm[AL_DAY], alarm[AL_MON]);
 				default:
-					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
 					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 			}
 
 		}
-		
 		// -------------------------------------------------------------------------------------------------
+
+		// If select button is pressed, cycle through parameters
 		if(selectPress)
 		{
-			if (param > AL_YEAR) param = SEC;
-			else param++;
+			if(cycling)
+			{
+				param++;
+				if(param == AL_YEAR) cycling = 0;
+			}
+			else cycling = 1;
+
+			selectPress = 0;
 		}
 
+		// If increment button is pressed, increment current paremeter, or sets alarm on/off
 		if(incrementPress)
 		{
-			if(param == SEC) adjust = incrementTime(&alarm[SEC], 60);
-			if(param == MIN) adjust = incrementTime(&alarm[MIN], 60);
-			if(param == HR) adjust = incrementTime(&alarm[HR], 24);
-			if(param == AL_DAY) adjust  = incrementDate(&alarm[AL_DAY], monthDays[date[MON]-1], 0);
-			if(param == AL_MON) adjust = incrementDate(&alarm[AL_MON], 12, 1);
-			if(param == AL_YEAR) adjust = incrementDate(&alarm[AL_YEAR], 65535, 0);
+			if(cycling)
+			{
+				if(param == AL_MIN) adjust = incrementTime(&alarm[AL_MIN], 60);
+				if(param == AL_HR) adjust = incrementTime(&alarm[AL_HR], 24);
+				if(param == AL_DAY) adjust  = incrementDate(&alarm[AL_DAY], monthDays[date[MON]-1], 0);
+				if(param == AL_MON) adjust = incrementDate(&alarm[AL_MON], 12, 1);
+				if(param == AL_YEAR) adjust = incrementDate(&alarm[AL_YEAR], 65535, 0);
+			}
+			else
+			{
+				alarmOn = !alarmOn;
+			}
+
+			incrementPress = 0;
 		}
 
-		if(modePress) stay = 0;
+		// If mode button is pressed, leave this mode
+		if(modePress)
+		{
+			stay = 0;
+			modePress = 0;
+		}
 	}
 	setTimeDateMode();
-
-	// definir padrão de representação de hora-data na eeprom
-	// definir padrão de uso das posições da eeprom
-	// usar esc_eeprom, colocar verificação em clockMode caso horário bata com o do alarme
 }
 
 void blink()
 {
-	// Returns 1 to blink, 0 not to blink; blinks every 100 ms 
+	// Returns 1 to blink, 0 not to blink; blinks every 100 ms
 	static unsigned int oldMills;
 	unsigned int aux;
 
@@ -261,7 +336,7 @@ void blink()
 
 	if(aux - oldMills > 100)
 		{
-			oldMills = aux;
+			oldMills = mills;
 			return 1;
 		}
 	return 0;
@@ -282,10 +357,5 @@ int main(void)
 	{
 		clockMode();
 	}
-
-
 	return 0;
-
-
-
 }
