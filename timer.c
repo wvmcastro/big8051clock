@@ -58,7 +58,7 @@ void initTimer3(void)
     SFRPAGE = LEGACY_PAGE;
 }
 
-void isrTimer3(void) __interrupt 13
+void isrTimer3(void) __interrupt 14
 {
     // Change to TMR3_PAGE
     SFRPAGE = TMR3_PAGE;

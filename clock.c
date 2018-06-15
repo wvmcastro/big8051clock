@@ -149,13 +149,16 @@ void clockMode()
 	printf_fast_f("\x01 BIG8051 CLOCK");
 	while(stay)
 	{
-		//updateTime();
-		//printf_fast_f("\x02 %2d : %2d : %2d", time[HR], time[MIN], time[SEC]);
-		//printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
-		printf_fast_f("\x02 %2d : %2d", TMR3H, TMR3L);
-		delay_ms(200);
-		printf_fast_f("\x02 %d", mills+80);
+		printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
+		printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+		printf_fast_f("\x04  ");
 
+
+		/*if(alarmSignal)
+		{
+			printf_fast_f("\x04 ALARM");
+		}*/
+	
 		if(modePress) stay = 0;
 	}
 	// stay = 0 => go to next mode
@@ -167,7 +170,7 @@ void setAlarmMode()
 	// Sets an alarm and saves it to eeprom memory
 	unsigned int end_mem;
 	int ret;
-	unsigned char param = SEC;
+	unsigned char param, adjust;
 	__bit timeOrDate, stay = 0;
 
 	// At first, takes the currently saved alarm and displays it
@@ -177,26 +180,66 @@ void setAlarmMode()
 		alarm[param] = le_eeprom(END_EEPROM, end_mem);
 		param++;
 	}
+
 	// Copying the HIGH part of the YEAR
 	alarm[param] = le_eeprom(END_EEPROM, end_mem)/256;
 
+	param = SEC;
 	while(stay)
 	{
-		///////////////////////////////////////////////////////////////////////
-		//blink(param);
+		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
+		printf_fast_f("\x01 SET ALARM");
+		blink = blink();
+		if(blink == 0)
+		{
+			printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+			printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+		}
+		else
+		{
+			switch(param)
+			{
+				case SEC:
+					printf_fast_f("\x02   :%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				case MIN:
+					printf_fast_f("\x02 %2d:  :%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				case HR:
+					printf_fast_f("\x02 %2d:%2d:  ", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				case AL_DAY:
+					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03   /%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				case AL_MON:
+					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/  /%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				case AL_YEAR:
+					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/%2d/    ", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+				default:
+					printf_fast_f("\x02 %2d:%2d:%2d", alarm[HR], alarm[MIN], alarm[SEC]);
+					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+			}
+
+		}
+		
+		// -------------------------------------------------------------------------------------------------
 		if(selectPress)
 		{
-			if (param > AL_YEARH)
-			{
-
-			}
+			if (param > AL_YEAR) param = SEC;
+			else param++;
 		}
 
 		if(incrementPress)
 		{
-
+			if(param == SEC) adjust = incrementTime(&alarm[SEC], 60);
+			if(param == MIN) adjust = incrementTime(&alarm[MIN], 60);
+			if(param == HR) adjust = incrementTime(&alarm[HR], 24);
+			if(param == AL_DAY) adjust  = incrementDate(&alarm[AL_DAY], monthDays[date[MON]-1], 0);
+			if(param == AL_MON) adjust = incrementDate(&alarm[AL_MON], 12, 1);
+			if(param == AL_YEAR) adjust = incrementDate(&alarm[AL_YEAR], 65535, 0);
 		}
-		///////////////////////////////////////////////////////////////////////////
 
 		if(modePress) stay = 0;
 	}
@@ -207,61 +250,22 @@ void setAlarmMode()
 	// usar esc_eeprom, colocar verificação em clockMode caso horário bata com o do alarme
 }
 
-/*
-void incrementParam(__bit timeOrDate, unsigned char param)
+void blink()
 {
-	// Increments a given parameter
+	// Returns 1 to blink, 0 not to blink; blinks every 100 ms 
+	static unsigned int oldMills;
+	unsigned int aux;
 
-	if (timeOrDate == TIME)
-	{
-		if(param == DAY)
-		{
-			if(date[DAY] == monthDays[date[MONTH]-1])
-				date[DAY] = 1;
-			else
-				date[DAY] += 1;
-		}
-		if(param == MON)
-		{
-			if(date[MON] == 12)
-				date[MON] = 1;
-			else
-				date[MON] += 1;
-		}
-		if(param == YEAR)
-		{
-			date[YEAR] += 1;
-			getDays(date[YEAR], monthDays);
-		}
+	if(mills - oldMills > 0) aux = mills;
+	else aux = mills + 1000;
 
-	}
-	else
-	{
-		if(param == HR)
+	if(aux - oldMills > 100)
 		{
-			if(time[HR] == 23)
-				time[HR] = 0;
-			else
-				time[HR] += 1;
+			oldMills = aux;
+			return 1;
 		}
-		if(param == MIN)
-		{
-			if(time[MIN] == 59)
-				time[MIN] = 0;
-			else
-				time[MIN] += 1;
-		}
-		if(param == SEC)
-		{
-			if(time[SEC] == 59)
-				time[SEC] = 0;
-			else
-				time[SEC] += 1;
-		}
-
-	}
-
-}*/
+	return 0;
+}
 
 int main(void)
 {
