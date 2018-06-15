@@ -237,13 +237,7 @@ void setAlarmMode()
 	__bit cycling, stay = 0;
 
 	// At first, takes the currently saved alarm to display it
-
-	param = AL_MIN;
-	for(end_mem = 0; end_mem < 5; end_mem++)
-	{
-		alarm[param] = le_eeprom(END_EEPROM, end_mem);
-		param++;
-	}
+	readAlarm(alarm);
 
 	param = AL_MIN;
 	while(stay)
@@ -317,9 +311,13 @@ void setAlarmMode()
 			incrementPress = 0;
 		}
 
-		// If mode button is pressed, leave this mode
+		// If mode button is pressed, leave this mode and save alarm (if ON)
 		if(modePress)
 		{
+			if(alarmOn)
+			{
+				saveAlarm(alarm);
+			}
 			stay = 0;
 			modePress = 0;
 		}
