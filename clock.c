@@ -237,7 +237,7 @@ void setAlarmMode()
 	__bit cycling, stay = 0;
 
 	// At first, takes the currently saved alarm to display it
-	readAlarm(alarm);
+	readAlarm();
 
 	param = AL_MIN;
 	while(stay)
@@ -316,7 +316,7 @@ void setAlarmMode()
 		{
 			if(alarmOn)
 			{
-				saveAlarm(alarm);
+				saveAlarm();
 			}
 			stay = 0;
 			modePress = 0;
