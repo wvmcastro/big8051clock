@@ -11,7 +11,7 @@
 // --------------------------------------------------------
 
 // ------------------------- Time-Date Managing defines -----------------------------
-unsigned int mills = 0;
+volatile unsigned int mills = 0;
 
 #define YEAR 2
 #define MON 1

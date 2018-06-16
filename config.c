@@ -16,8 +16,13 @@ void Reset_Sources_Init()
 void Timer_Init()
 {
     SFRPAGE   = TIMER01_PAGE;
-    TCON      = 0x10;
-    CKCON     = 0x08;
+    TCON      = 0x50;
+    TMOD      = 0x20;
+    CKCON     = 0x0A;
+    TL1       = 0x8C;
+    TH1       = 0x34;
+    SFRPAGE   = TMR2_PAGE;
+    TMR2CN    = 0x04;
     SFRPAGE   = TMR3_PAGE;
     TMR3CN    = 0x04;
     RCAP3L    = 0x3D;
@@ -81,7 +86,7 @@ void Oscillator_Init()
 
 void Interrupts_Init()
 {
-    IE        = 0x80;
+    IE        = 0xA8;
     EIE2      = 0x01;
 }
 

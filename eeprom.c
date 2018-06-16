@@ -60,7 +60,7 @@ int I2CReadByte(__bit NACK)
 void I2CSendByte(unsigned char byte, __bit afterStart)
 {
     // Stores the transmiting byte at SB0DAT
-    SM0DAT = byte;
+    SMB0DAT = byte;
 
     if(afterStart) STA = 0;
 
