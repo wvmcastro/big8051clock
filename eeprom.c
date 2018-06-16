@@ -1,9 +1,25 @@
+#define __EEPROM__
+
 #ifndef __DEFINES__
     #include "defines.h"
 #endif
 
 
-void I2CStart(void)
+void Timer4_ISR(void) __interrupt 16
+{
+    // If the bus is locked for to long, resets the bus
+
+    // Disables SMBus
+	SMB0CN &= ~0x40;
+
+    // Enables SMBus
+	SMB0CN |= 0x40;
+
+    // Sets the TC4 overflow flag to zero
+	TF4 = 0;
+}
+
+unsigned char I2CStart(void)
 {
     // Sends a start signal to the I2C bus
 
@@ -57,7 +73,7 @@ int I2CReadByte(__bit NACK)
     return -1;
 }
 
-void I2CSendByte(unsigned char byte, __bit afterStart)
+unsigned I2CSendByte(unsigned char byte, __bit afterStart)
 {
     // Stores the transmiting byte at SB0DAT
     SMB0DAT = byte;
@@ -72,7 +88,7 @@ void I2CSendByte(unsigned char byte, __bit afterStart)
     return SMB0STA;
 }
 
-void char I2CWriteControlByte(unsigned char deviceAdrres, __bit RW)
+unsigned char I2CWriteControlByte(unsigned char deviceAdrres, __bit RW)
 {
     unsigned char status;
 
@@ -107,15 +123,14 @@ int writeEeprom(unsigned char deviceAdrres, unsigned char memAddress, unsigned c
     for(i = 0; i < numBytes && ret != 0x28; i++)
     {
         ret = I2CSendByte(*(data+i), 0);
+
+        // Waits untill ACK, ie Acknowledge pollig
+        while(I2CWriteControlByte(deviceAdrres, WRITE) != 0);
+
     }
 
-    if(ret != 0x28)
-    {
-        I2CStop();
-        return 0;
-    }
-
-    return -1;
+    I2CStop();
+    return 0;
 }
 
 int readEeprom(unsigned char deviceAdrres, unsigned char memAddress, unsigned char *dst, unsigned int numBytes)
