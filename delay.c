@@ -1,3 +1,5 @@
+#define __DELAY__
+
 #ifndef __DEF_PINOS__
 	#define __DEF_PINOS__
 	#include "def_pinos.h"

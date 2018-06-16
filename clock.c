@@ -16,9 +16,9 @@
 	#include "glcd.c"
 #endif
 
-//#ifndef __EEPROM__
-//	#include "eeprom.c"
-//#endif
+#ifndef __EEPROM__
+	#include "eeprom.c"
+#endif
 
 
 #ifndef __DEFINES__
@@ -29,13 +29,16 @@
 	#include "timer.c"
 #endif
 
+#ifndef __MISC__
+	#include "misc.c"
+#endif
+
 //------------------------------- function headers -------------------------------
 unsigned char readKey();
 void isrTimer2() __interrupt 5;
 void setTimeDateMode();
 void clockMode();
-//void setAlarmMode();
-__bit blink();
+void setAlarmMode();
 //--------------------------------------------------------------------------------
 
 
@@ -43,8 +46,10 @@ unsigned char readKey()
 {
 	// returns which key is being pressed
 	// some button is being pressed
-	if (P0 != 0xFF)
+
+	if (KEYBOARD_ROW != 0xFF)
 	{
+		
 		if (!MODEBUTTON) return MODE;
 		if (!SELECTBUTTON) return SELECT;
 		if (!INCREMENTBUTTON) return INCREMENT;
@@ -63,7 +68,7 @@ void isrTimer2() __interrupt 5
 	TF2 = 0;
 
 	// If no button is being pressed, state is 0
-	if(P0 == 0xFF)
+	if(KEYBOARD_ROW == 0xFF)
 		state = 0;
 
 	// If state is 0, check if a key is being pressed
@@ -96,20 +101,20 @@ void setTimeDateMode()
 	param = SEC;
 
 	stay = 1;
+	_blink = 0;
+
 	// Stays in set-time-date-mode while user doesn't press Mode to confirm
 	while(stay)
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
-		printf_fast_f("\x01 SET TIME OR DATE");
-		_blink = blink();
+		printf_fast_f("\x01 SET TIME/DATE");
+		
+		_blink = shouldBlink(500, _blink);
 
 		if(_blink)
-			numBlinks++;
-
-		if(numBlinks % 2 == 0)
 		{
-			printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
-			printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+			printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+			printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 		}
 		else
 		{
@@ -117,18 +122,18 @@ void setTimeDateMode()
 			{
 				if(param == HR)
 				{
-					printf_fast_f("\x02   :%2d:%2d", time[MIN], time[SEC]);
-					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+					printf_fast_f("\x03   :%2u:%2u", time[MIN], time[SEC]);
+					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 				}
 				if(param == MIN)
 				{
-					printf_fast_f("\x02 %2d:  :%2d", time[HR], time[SEC]);
-					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+					printf_fast_f("\x03 %2u:  :%2u", time[HR], time[SEC]);
+					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 				}
 				if(param == SEC)
 				{
-					printf_fast_f("\x02 %2d:%2d:  ", time[HR], time[MIN]);
-					printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
+					printf_fast_f("\x03 %2u:%2u:  ", time[HR], time[MIN]);
+					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 				}
 			}
 
@@ -136,18 +141,18 @@ void setTimeDateMode()
 			{
 				if(param == DAY)
 				{
-					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x03   /%2d/%4d", date[MON], date[YEAR]);
+					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x05   /%2u/%4u", date[MON], date[YEAR]);
 				}
 				if(param == MON)
 				{
-					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x03 %2d/  /%4d", date[DAY], date[YEAR]);
+					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x05 %2u/  /%4u", date[DAY], date[YEAR]);
 				}
 				if(param == YEAR)
 				{
-					printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x03 %2d/%2d/    ", date[DAY], date[MON]);
+					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+					printf_fast_f("\x05 %2u/%2u/    ", date[DAY], date[MON]);
 				}
 			}
 
@@ -182,7 +187,7 @@ void setTimeDateMode()
 			}
 			if(timeOrDate == DATE)
 			{
-					if(param == DAY) adjust  = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
+					if(param == DAY) adjust  = incrementDate(&date[DAY], monthDays[date[MON]-1], 1);
 					if(param == MON) adjust = incrementDate(&date[MON], 12, 1);
 					if(param == YEAR)
 					{
@@ -197,6 +202,7 @@ void setTimeDateMode()
 		{
 			stay = 0;
 			modePress = 0;
+			clearGlcd();
 		}
 	}
 	// stay = 0 => go to next mode
@@ -206,15 +212,15 @@ void setTimeDateMode()
 void clockMode()
 {
 	// Displays current time and date; "default" mode
-	__bit _blink, stay = 1;
+	__bit stay = 1;
 	unsigned char i;
+	
 
 	printf_fast_f("\x01 BIG8051 CLOCK");
 	while(stay)
 	{
-		printf_fast_f("\x02 %2d:%2d:%2d", time[HR], time[MIN], time[SEC]);
-		printf_fast_f("\x03 %2d/%2d/%4d", date[DAY], date[MON], date[YEAR]);
-		printf_fast_f("\x04  ");
+		printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+		printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 
 		// Checks if current time and date matches alarm time and date
 		if(alarmOn && time[SEC] == 0 && alarm[AL_MIN] == time[MIN]
@@ -223,18 +229,13 @@ void clockMode()
 		{
 			// Buzzes for 3 seconds
 			i = 0;
-			while(i <= 35)
+			while(i <= 9)
 			{
-				_blink = blink();
-				if (_blink && i%10 == 0)
+				if(BUZZER != shouldBlink(500, BUZZER))
 				{
-					P2_7 = 1;
+					BUZZER = !BUZZER;
+					i++;
 				}
-				if (i%10 != 0 && i%5 == 0)
-				{
-					P2_7 = 0;
-				}
-				if(_blink) i++;
 			}
 		}
 
@@ -242,62 +243,65 @@ void clockMode()
 		{
 				stay = 0;
 				modePress = 0;
+				clearGlcd();
 		}
 	}
 	// stay = 0 => go to next mode
-//	setAlarmMode();
-	setTimeDateMode(); // TIRRAAR DAQUI QUANDO VOLTAR ALARME MODE
+	setAlarmMode();
+	//setTimeDateMode();
 }
 
-/*void setAlarmMode()
+void setAlarmMode()
 {
 	// Sets an alarm and saves it to eeprom memory
 	unsigned char param, adjust;
-	__bit cycling, stay = 0, _blink;
+	__bit cycling = 0, stay = 1, _blink = 0;
 
 	// At first, takes the currently saved alarm to display it
 	readAlarm();
 
 	param = AL_MIN;
+	
 	while(stay)
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
-		if(alarmOn) printf_fast_f("\x01 SET ALARM | on");
-		else printf_fast_f("\x01 SET ALARM | off");
+		if(alarmOn) printf_fast_f("\x01 SET ALARM | on ");
+		else
+			printf_fast_f("\x01 SET ALARM | off");
 
-		_blink = blink();
+		_blink = shouldBlink(500, _blink);
 		if(_blink == 0 || cycling == 0)
 		{
-			printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
-			printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+			printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+			printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 		}
 		else if(cycling)
 		{
 			switch(param)
 			{
 				case AL_HR:
-					printf_fast_f("\x02   :%2d", alarm[AL_MIN]);
-					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x03   :%2u", alarm[AL_MIN]);
+					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_MIN:
-					printf_fast_f("\x02 %2d:  ", alarm[AL_HR]);
-					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x03 %2u:  ", alarm[AL_HR]);
+					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_DAY:
-					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
-					printf_fast_f("\x03   /%2d/%4d", alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x05   /%2u/%4u", alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_MON:
-					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
-					printf_fast_f("\x03 %2d/  /%4d", alarm[AL_DAY], alarm[AL_YEAR]);
+					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x05 %2u/  /%4u", alarm[AL_DAY], alarm[AL_YEAR]);
 					break;
 				case AL_YEAR:
-					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
-					printf_fast_f("\x03 %2d/%2d/    ", alarm[AL_DAY], alarm[AL_MON]);
+					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x05 %2u/%2u/    ", alarm[AL_DAY], alarm[AL_MON]);
 					break;
 				default:
-					printf_fast_f("\x02 %2d:%2d", alarm[AL_HR], alarm[AL_MIN]);
-					printf_fast_f("\x03 %2d/%2d/%4d", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 			}
 
 		}
@@ -308,8 +312,13 @@ void clockMode()
 		{
 			if(cycling)
 			{
-				param++;
-				if(param == AL_YEAR) cycling = 0;
+				if(param == AL_YEAR)
+				{
+					param = AL_MIN;
+					cycling = 0;
+				}
+				else param++;
+				
 			}
 			else cycling = 1;
 
@@ -344,39 +353,21 @@ void clockMode()
 			}
 			stay = 0;
 			modePress = 0;
+			clearGlcd();
 		}
 	}
 	setTimeDateMode();
-}*/
-
-__bit blink()
-{
-	// Returns 1 to blink, 0 not to blink; blinks every 200 ms
-	static unsigned int oldMills;
-	unsigned int aux;
-
-	if(mills - oldMills > 0) aux = mills;
-	else aux = mills + 1000;
-
-	if(aux - oldMills > 200)
-		{
-			oldMills = mills;
-			return 1;
-		}
-	return 0;
 }
 
 int main(void)
 {
 	Init_Device();
 	SFRPAGE = LEGACY_PAGE;
-
-	Ini_glcd();
-	limpa_glcd(ESQ);
-	limpa_glcd(DIR);
-
+	
 	initTimer3();
-
+	Ini_glcd();
+	clearGlcd();
+	
 	while(1)
 	{
 		clockMode();

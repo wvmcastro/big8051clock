@@ -29,53 +29,49 @@ unsigned char I2CStart(void)
     // Sets SI to 0 because when it goes to 1 it means that the I2C status
     // has changed
     SI = 0;
-
+	
     // Waits until the status change occurs
     while(SI == 0);
-
-    STA = 0;
     return SMB0STA;
 }
 
-void I2Cstop(void)
+void I2CStop(void)
 {
     // Sends a stop signal to the I2C bus
     STO = 1;
 
-    // Sets SI to 0 so this way de bus is unlocked
+    // Sets SI to 0 so this way the bus is unlocked
     SI = 0;
 
     // Waits until the status change occurs
     while(STO == 1);
-
-    return 0;
 }
 
 int I2CReadByte(__bit NACK)
 {
     // Configures 8051 to send a NACK after receive the byte
-    AA = ~NACK;
+    AA = !NACK;
 
     SI = 0;
 
     // Checks when the status changes
     while(SI == 0);
 
-    // Data byte received NACK transmited
+    // Data byte received NACK transmitted
     if(NACK && SMB0STA == 0x58)
         return (unsigned char) SMB0DAT;
 
-    // Data byte received ACK transmited
-    if(~NACK && SMB0STA == 0x50)
+    // Data byte received ACK transmitted
+    if(!NACK && SMB0STA == 0x50)
         return (unsigned char) SMB0DAT;
 
     // If some error occurs return -1
     return -1;
 }
 
-unsigned I2CSendByte(unsigned char byte, __bit afterStart)
+unsigned char I2CSendByte(unsigned char byte, __bit afterStart)
 {
-    // Stores the transmiting byte at SB0DAT
+    // Stores the transmiting byte at SMB0DAT
     SMB0DAT = byte;
 
     if(afterStart) STA = 0;
@@ -88,64 +84,66 @@ unsigned I2CSendByte(unsigned char byte, __bit afterStart)
     return SMB0STA;
 }
 
-unsigned char I2CWriteControlByte(unsigned char deviceAdrres, __bit RW)
+unsigned char I2CWriteControlByte(unsigned char deviceAddress, __bit RW)
 {
     unsigned char status;
 
     status = I2CStart();
-
+	
     // If the start is not successful return the status error
     if(status != 0x08 && status != 0x10)
         return status;
 
-    status = I2CSendByte(deviceAdrres | (unsigned char) RW, 1);
+    status = I2CSendByte(deviceAddress | (unsigned char) RW, 1);
 
-    // Checks if Save Address + W transmitted ACK received, if not returns
+    // Checks if Slave Address + W transmitted ACK received, if not returns
     // status error
     if(RW == WRITE && status != 0x18) return status;
 
-    // Checks if Save Address + R transmited and ACK received, if not returns
+    // Checks if Slave Address + R transmited and ACK received, if not returns
     // status error
-    if(RW == READ && status != 0x40) return status
+    if(RW == READ && status != 0x40) return status;
 
     // In case everything goes fine
     return 0;
 }
 
-int writeEeprom(unsigned char deviceAdrres, unsigned char memAddress, unsigned char *data, unsigned int numBytes)
+int writeEeprom(unsigned char deviceAddress, unsigned char memAddress, unsigned char *data, unsigned int numBytes)
 {
     unsigned char ret, i;
 
-    ret = I2CWriteControlByte(deviceAdrres, WRITE);
+    ret = I2CWriteControlByte(deviceAddress, WRITE);
     if(ret == 0) ret = I2CSendByte(memAddress, 0);
 
     // Sends all bytes inside data[]
-    for(i = 0; i < numBytes && ret != 0x28; i++)
+    for(i = 0; i < numBytes && ret == 0x28; i++)
     {
         ret = I2CSendByte(*(data+i), 0);
-
-        // Waits untill ACK, ie Acknowledge pollig
-        while(I2CWriteControlByte(deviceAdrres, WRITE) != 0);
-
     }
 
     I2CStop();
+	while(I2CWriteControlByte(deviceAddress, WRITE) != 0);
     return 0;
 }
 
-int readEeprom(unsigned char deviceAdrres, unsigned char memAddress, unsigned char *dst, unsigned int numBytes)
+int readEeprom(unsigned char deviceAddress, unsigned char memAddress, unsigned char *dst, unsigned int numBytes)
 {
     unsigned char ret, i, k;
     int data;
 
-    ret = I2CWriteControlByte();
-    if(ret == 0x28) ret = I2CSendByte(memAddress, 0);
+    ret = I2CWriteControlByte(deviceAddress, WRITE);
+	
+    if(ret == 0) ret = I2CSendByte(memAddress, 0);
+	
+	ret = I2CWriteControlByte(deviceAddress, READ);
 
     k = 1;
     for(i = 0; i < numBytes && k; i++)
     {
         if(i < numBytes-1) // Reads and transmites ACK
+		{
             data = I2CReadByte(0);
+		}
         else // Reads and transmites NACK
             data = I2CReadByte(1);
 
@@ -155,14 +153,18 @@ int readEeprom(unsigned char deviceAdrres, unsigned char memAddress, unsigned ch
             k = 0;
     }
 
-    if(~k) return -1;
-
+    if(!k)
+	{
+		return -1;
+	}
+	
+	I2CStop();
     return k;
 }
 
 void saveAlarm()
 {
-    unsigned int ret;
+    int ret;
     unsigned char i, aux[6];
 
     for(i = 0; i < 5; i++)
@@ -172,23 +174,20 @@ void saveAlarm()
     aux[5] = (unsigned char) (alarm[4] / 256);
 
     ret = writeEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 6);
-
-    return ret;
 }
 
 void readAlarm()
 {
-    unsigned int ret;
+    int ret;
     unsigned char i, aux[6];
-
     ret = readEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 6);
-
+	
     if(ret >= 0)
     {
         for(i = 0; i < 4; i++)
         {
             alarm[i] = aux[i];
         }
-        alarm[4] = (aux[4] << 8) | aux[5];
+        alarm[4] = (aux[5] << 8) | aux[4];
     }
 }

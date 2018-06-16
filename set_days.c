@@ -22,17 +22,3 @@ void getDays(unsigned int year, unsigned int *yearVector)
     if(leapYear) yearVector[1] = 29;
     else yearVector[1] = 28;
 }
-
-/*int main(void)
-{
-    unsigned int monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    unsigned int i, year;
-    while(scanf("%u", &year) != EOF)
-    {
-        getDays(year, monthDays);
-        for(i = 0; i < 12; i++)
-            printf("%d ", monthDays[i]);
-        printf("\n");
-    }
-    return 0;
-}*/

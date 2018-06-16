@@ -33,7 +33,7 @@ unsigned char charCount = 0;
 unsigned char currentPage = 0;
 
 //Essa matriz contem dados para montar 96 caracteres (codigos ASCII 32 a 127)  
-const char fonte[96][5] = {
+__xdata const char fonte[96][5] = {
 {0x00, 0x00, 0x00, 0x00, 0x00},// (space)
 {0x00, 0x00, 0x5F, 0x00, 0x00},// !
 {0x00, 0x07, 0x00, 0x07, 0x00},// "
@@ -250,6 +250,12 @@ void limpa_glcd(__bit cs)
 	charCount = 0;
 	conf_pag(0, cs);
 	conf_y(0, cs);
+}
+
+void clearGlcd()
+{
+	limpa_glcd(ESQ);
+	limpa_glcd(DIR);
 }
 
 void putchar(char c)

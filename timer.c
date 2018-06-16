@@ -96,7 +96,7 @@ void updateTime() __reentrant
         if(increment) increment = incrementTime(&time[HR], 24);
 
         //Increment days
-        if(increment) increment = incrementDate(&date[DAY], monthDays[date[MON]-1], 0);
+        if(increment) increment = incrementDate(&date[DAY], monthDays[date[MON]-1], 1);
 
         //Increment month
         if(increment) increment = incrementDate(&date[MON], 12, 1);
@@ -130,7 +130,7 @@ unsigned char incrementDate(unsigned int *value, unsigned int limit, unsigned in
 {
     *value += 1;
 
-    if(*value == limit)
+    if(*value > limit)
     {
         *value = rst;
         return 1;

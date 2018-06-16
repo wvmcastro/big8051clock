@@ -7,7 +7,7 @@
 #define WRITE           0
 #define READ            1
 #define EEPROM_ADDRESS  0xA0
-#define MEM_ADDRESS     0x08
+#define MEM_ADDRESS     0x00
 // --------------------------------------------------------
 
 // ------------------------- Time-Date Managing defines -----------------------------
@@ -26,7 +26,7 @@ volatile unsigned int mills = 0;
 
 volatile unsigned int date[3] = {1, 1, 2000};
 volatile unsigned char time[3];
-volatile unsigned int alarm[6];
+volatile unsigned int alarm[5] = {11, 9, 16, 6, 2018 }; // ALARM[] = {MIN, HOUR, DAY, MONTH, YEAR}
 volatile unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 __bit alarmOn = 0;
@@ -35,13 +35,14 @@ __bit alarmOn = 0;
 #define AL_DAY 2
 #define AL_HR 1
 #define AL_MIN 0
+#define BUZZER P2_7
 // -----------------------------------------------------------------------------
 
 // ------------------ Button defines ------------------
-
-#define MODEBUTTON P0_0
-#define SELECTBUTTON P0_1
-#define INCREMENTBUTTON P0_2
+#define KEYBOARD_ROW P1
+#define MODEBUTTON P1_0
+#define SELECTBUTTON P1_1
+#define INCREMENTBUTTON P1_2
 
 #define MODE 0
 #define SELECT 1
