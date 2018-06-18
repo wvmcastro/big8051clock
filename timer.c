@@ -4,21 +4,14 @@
     #include "defines.h"
 #endif
 
-#ifndef __SET_DAYS__
-    #include "set_days.c"
+#ifndef __MISC__
+    #include "misc.c"
 #endif
-
-// TFx hardware overflow tag
-// TRx enables os disables the timer
-// SYSCLOCK = 25000000
-// TC0
 
 // ----------------------------- function headers --------------------------------------
 //Initializes the TC3 in auto reload mode and sets TMR3H and TMR3L in a way
 //that the overflow will occur at each 20ms with SYSCLK/12
 void initTimer3(void);
-
-//void isrTimer3(void) __interrupt 13;
 
 unsigned char incrementTime(unsigned char*, unsigned char);
 unsigned char incrementDate(unsigned int*, unsigned int, unsigned int);

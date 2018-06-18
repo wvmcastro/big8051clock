@@ -8,8 +8,8 @@
 	#include "config.c"
 #endif
 
-#ifndef __DELAY__
-	#include "delay.c"
+#ifndef __DEFINES__
+	#include "defines.h"
 #endif
 
 #ifndef __GLCD__
@@ -18,11 +18,6 @@
 
 #ifndef __EEPROM__
 	#include "eeprom.c"
-#endif
-
-
-#ifndef __DEFINES__
-	#include "defines.h"
 #endif
 
 #ifndef __TIMER__
@@ -41,7 +36,6 @@ void clockMode();
 void setAlarmMode();
 //--------------------------------------------------------------------------------
 
-
 unsigned char readKey()
 {
 	// returns which key is being pressed
@@ -49,7 +43,7 @@ unsigned char readKey()
 
 	if (KEYBOARD_ROW != 0xFF)
 	{
-		
+
 		if (!MODEBUTTON) return MODE;
 		if (!SELECTBUTTON) return SELECT;
 		if (!INCREMENTBUTTON) return INCREMENT;
@@ -94,7 +88,7 @@ void setTimeDateMode()
 	//Select Button: cycles through parameters
 	//Increment Button: increments the current parameter
 	//Mode Button: confirms current parameters and exits this mode
-	static unsigned int numBlinks; 
+	static unsigned int numBlinks;
 	unsigned char param, adjust;
 	__bit timeOrDate, stay, _blink;
 	timeOrDate = TIME;
@@ -108,7 +102,7 @@ void setTimeDateMode()
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
 		printf_fast_f("\x01 SET TIME/DATE");
-		
+
 		_blink = shouldBlink(500, _blink);
 
 		if(_blink)
@@ -214,7 +208,7 @@ void clockMode()
 	// Displays current time and date; "default" mode
 	__bit stay = 1;
 	unsigned char i;
-	
+
 
 	printf_fast_f("\x01 BIG8051 CLOCK");
 	while(stay)
@@ -261,7 +255,7 @@ void setAlarmMode()
 	readAlarm();
 
 	param = AL_MIN;
-	
+
 	while(stay)
 	{
 		// ---------------------------------- DISPLAYING ON THE SCREEN ----------------------------------
@@ -318,7 +312,7 @@ void setAlarmMode()
 					cycling = 0;
 				}
 				else param++;
-				
+
 			}
 			else cycling = 1;
 
@@ -363,11 +357,11 @@ int main(void)
 {
 	Init_Device();
 	SFRPAGE = LEGACY_PAGE;
-	
+
 	initTimer3();
 	Ini_glcd();
 	clearGlcd();
-	
+
 	while(1)
 	{
 		clockMode();
