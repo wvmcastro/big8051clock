@@ -13,8 +13,8 @@
 //that the overflow will occur at each 20ms with SYSCLK/12
 void initTimer3(void);
 
-unsigned char incrementTime(unsigned char*, unsigned char);
-unsigned char incrementDate(unsigned int*, unsigned int, unsigned int);
+unsigned char alterTime(unsigned char*, unsigned char, __bit);
+unsigned char alterDate(unsigned int*, unsigned int, unsigned int, __bit);
 
 //Updates the time
 void updateTime() __reentrant;
@@ -100,7 +100,7 @@ void updateTime() __reentrant
         //Increment year
         if(increment)
         {
-            increment = incrementDate(&date[YEAR], 65535, 0, INCREMENT);
+            increment = alterDate(&date[YEAR], 65535, 0, INCREMENT);
             getDays(date[YEAR], monthDays);
         }
     }
@@ -108,26 +108,6 @@ void updateTime() __reentrant
 
 unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increment)
 {
-    //Increments/decrements the time
-    // if(increment)
-    // {
-    //     *value += 1;
-    //     if(*value == limit)
-    //     {
-    //         *value = 0;
-    //         return 1;
-    //     }
-    // }
-    // else
-    // {
-    //     *value -= 1;
-    //     if(*value == 255)
-    //     {
-    //         *value = limit -1;
-    //     }
-    // }
-    // return 0;
-
     if(increment) *value += 1;
     else *value -= 1;
 
@@ -147,7 +127,7 @@ unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increme
 unsigned char alterDate(unsigned int *value, unsigned int limit, unsigned int rst, __bit increment)
 {
     if(increment) *value += 1;
-    else value -= 1;
+    else *value -= 1;
 
     if(*value > limit)
     {

@@ -34,6 +34,14 @@ void clockMode();
 void setAlarmMode();
 //--------------------------------------------------------------------------------
 
+__bit exitMode(void)
+{
+	// Used between mode changes
+	modePress = 0;
+	clearGlcd();
+	return 0;
+}
+
 void setTimeDateMode()
 {
 	//Sets the parameter of choice
@@ -93,7 +101,7 @@ void setTimeDateMode()
 					case DAY:
 						printf_fast_f("\x05   /%2u/%4u", date[MON], date[YEAR]);
 						break;
-					case DAY:
+					case MON:
 						printf_fast_f("\x05 %2u/  /%4u", date[DAY], date[YEAR]);
 						break;
 					case YEAR:
@@ -128,14 +136,14 @@ void setTimeDateMode()
 			if(timeOrDate == TIME)
 			{
 				if(param == SEC) adjust = alterTime(&time[SEC], 60, INCREMENT & incrementPress);
-				if(param == MIN) adjust = alterTime(&time[MIN], 60, INCREMENT & incrementPress);
-				if(param == HR) adjust = alterTime(&time[HR], 24, INCREMENT & incrementPress);
+				else if(param == MIN) adjust = alterTime(&time[MIN], 60, INCREMENT & incrementPress);
+				else if(param == HR) adjust = alterTime(&time[HR], 24, INCREMENT & incrementPress);
 			}
-			if(timeOrDate == DATE)
+			else if(timeOrDate == DATE)
 			{
 					if(param == DAY) adjust  = alterDate(&date[DAY], monthDays[date[MON]-1], 1, INCREMENT & incrementPress);
-					if(param == MON) adjust = alterDate(&date[MON], 12, 1, INCREMENT & incrementPress);
-					if(param == YEAR)
+					else if(param == MON) adjust = alterDate(&date[MON], 12, 1, INCREMENT & incrementPress);
+					else if(param == YEAR)
 					{
 						adjust = alterDate(&date[YEAR], 65535, 0, INCREMENT & incrementPress);
 						getDays(date[YEAR], monthDays);
@@ -147,9 +155,7 @@ void setTimeDateMode()
 
 		if(modePress)
 		{
-			stay = 0;
-			modePress = 0;
-			clearGlcd();
+			stay = exitMode();
 		}
 	}
 	// stay = 0 => go to next mode
@@ -162,8 +168,8 @@ void clockMode()
 	__bit stay = 1;
 	unsigned char i;
 
-
 	printf_fast_f("\x01 BIG8051 CLOCK");
+
 	while(stay)
 	{
 		printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
@@ -194,14 +200,11 @@ void clockMode()
 
 		if(modePress)
 		{
-				stay = 0;
-				modePress = 0;
-				clearGlcd();
+				stay = exitMode();
 		}
 	}
 	// stay = 0 => go to next mode
 	setAlarmMode();
-	//setTimeDateMode();
 }
 
 void setAlarmMode()
@@ -230,33 +233,32 @@ void setAlarmMode()
 		}
 		else if(cycling)
 		{
+			if(param == AL_HR || param == AL_MIN)
+				printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
+			else
+				printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
+
 			switch(param)
 			{
 				case AL_HR:
 					printf_fast_f("\x03   :%2u", alarm[AL_MIN]);
-					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_MIN:
 					printf_fast_f("\x03 %2u:  ", alarm[AL_HR]);
-					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_DAY:
-					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
 					printf_fast_f("\x05   /%2u/%4u", alarm[AL_MON], alarm[AL_YEAR]);
 					break;
 				case AL_MON:
-					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
 					printf_fast_f("\x05 %2u/  /%4u", alarm[AL_DAY], alarm[AL_YEAR]);
 					break;
 				case AL_YEAR:
-					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
 					printf_fast_f("\x05 %2u/%2u/    ", alarm[AL_DAY], alarm[AL_MON]);
 					break;
 				default:
 					printf_fast_f("\x03 %2u:%2u", alarm[AL_HR], alarm[AL_MIN]);
 					printf_fast_f("\x05 %2u/%2u/%4u", alarm[AL_DAY], alarm[AL_MON], alarm[AL_YEAR]);
 			}
-
 		}
 		// -------------------------------------------------------------------------------------------------
 
@@ -271,7 +273,6 @@ void setAlarmMode()
 					cycling = 0;
 				}
 				else param++;
-
 			}
 			else cycling = 1;
 
@@ -284,17 +285,15 @@ void setAlarmMode()
 			if(cycling)
 			{
 				if(param == AL_MIN) adjust = alterTime(&alarm[AL_MIN], 60, INCREMENT & incrementPress);
-				if(param == AL_HR) adjust = alterTime(&alarm[AL_HR], 24, INCREMENT & incrementPress);
-
-				if(param == AL_DAY) adjust  = alterDate(&alarm[AL_DAY], monthDays[date[MON]-1], 0, INCREMENT & incrementPress);
-				if(param == AL_MON) adjust = alterDate(&alarm[AL_MON], 12, 1, INCREMENT & incrementPress);
-				if(param == AL_YEAR) adjust = alterDate(&alarm[AL_YEAR], 65535, 0, INCREMENT & incrementPress);
+				else if(param == AL_HR) adjust = alterTime(&alarm[AL_HR], 24, INCREMENT & incrementPress);
+				else if(param == AL_DAY) adjust  = alterDate(&alarm[AL_DAY], monthDays[date[MON]-1], 1, INCREMENT & incrementPress);
+				else if(param == AL_MON) adjust = alterDate(&alarm[AL_MON], 12, 1, INCREMENT & incrementPress);
+				else if(param == AL_YEAR) adjust = alterDate(&alarm[AL_YEAR], 65535, 0, INCREMENT & incrementPress);
 			}
 			else
 			{
 				alarmOn = !alarmOn;
 			}
-
 			incrementPress = 0;
 			decrementPress = 0;
 		}
@@ -302,13 +301,8 @@ void setAlarmMode()
 		// If mode button is pressed, leave this mode and save alarm (if ON)
 		if(modePress)
 		{
-			if(alarmOn)
-			{
-				saveAlarm();
-			}
-			stay = 0;
-			modePress = 0;
-			clearGlcd();
+			if(alarmOn) saveAlarm();
+			stay = exitMode();
 		}
 	}
 	setTimeDateMode();

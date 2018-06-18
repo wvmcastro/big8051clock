@@ -1,9 +1,6 @@
 #define __DEFINES__
 
 // ------------------ Eeprom defines ----------------------
-#define SDA P0_0
-#define SCL P0_1
-
 #define WRITE           0
 #define READ            1
 #define EEPROM_ADDRESS  0xA0
