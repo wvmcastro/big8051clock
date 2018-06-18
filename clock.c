@@ -82,6 +82,12 @@ void isrTimer2() __interrupt 5
 
 }
 
+void printTimeDate(void)
+{
+	printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+	printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
+}
+
 void setTimeDateMode()
 {
 	//Sets the parameter of choice
@@ -114,45 +120,45 @@ void setTimeDateMode()
 		{
 			if(timeOrDate == TIME)
 			{
-				if(param == HR)
+				switch(param)
 				{
-					printf_fast_f("\x03   :%2u:%2u", time[MIN], time[SEC]);
-					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
+					case HR:
+						printf_fast_f("\x03   :%2u:%2u", time[MIN], time[SEC]);
+						break;
+					case MIN:
+						printf_fast_f("\x03 %2u:  :%2u", time[HR], time[SEC]);
+						break;
+					case SEC:
+						printf_fast_f("\x03 %2u:%2u:  ", time[HR], time[MIN]);
+						break;
+					default:
+						printTimeDate();
+
 				}
-				if(param == MIN)
-				{
-					printf_fast_f("\x03 %2u:  :%2u", time[HR], time[SEC]);
-					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
-				}
-				if(param == SEC)
-				{
-					printf_fast_f("\x03 %2u:%2u:  ", time[HR], time[MIN]);
-					printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
-				}
+				printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
 			}
 
 			if(timeOrDate == DATE)
 			{
-				if(param == DAY)
+				printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+
+				switch(param)
 				{
-					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x05   /%2u/%4u", date[MON], date[YEAR]);
-				}
-				if(param == MON)
-				{
-					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x05 %2u/  /%4u", date[DAY], date[YEAR]);
-				}
-				if(param == YEAR)
-				{
-					printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
-					printf_fast_f("\x05 %2u/%2u/    ", date[DAY], date[MON]);
+					case DAY:
+						printf_fast_f("\x05   /%2u/%4u", date[MON], date[YEAR]);
+						break;
+					case DAY:
+						printf_fast_f("\x05 %2u/  /%4u", date[DAY], date[YEAR]);
+						break;
+					case YEAR:
+						printf_fast_f("\x05 %2u/%2u/    ", date[DAY], date[MON]);
+						break;
+					default:
+						printTimeDate();
 				}
 			}
-
 		}
 		// -------------------------------------------------------------------------------------------------
-
 
 		if(selectPress)
 		{
@@ -188,10 +194,10 @@ void setTimeDateMode()
 						adjust = incrementDate(&date[YEAR], 65535, 0);
 						getDays(date[YEAR], monthDays);
 					}
-
 			}
 			incrementPress = 0;
 		}
+		
 		if(modePress)
 		{
 			stay = 0;
