@@ -45,10 +45,10 @@ __bit alarmOn = 0;
 #define INCREMENTBUTTON P1_2
 #define DECREMENTBUTTON P1_3
 
-#define MODE 0
-#define SELECT 1
-#define INCREMENT 2
-#define DECREMENT 3
+#define DECREMENT 0
+#define INCREMENT 1
+#define MODE 2
+#define SELECT 3
 
 volatile __bit modePress = 0;
 volatile __bit selectPress = 0;

@@ -41,20 +41,56 @@ __bit shouldBlink(unsigned int t, __bit s)
 	return s;
 }
 
-
-__bit blink()
+unsigned char readKey()
 {
-	// Returns 1 to blink, 0 not to blink; blinks every 200 ms
-	static unsigned int oldMills;
-	unsigned int aux;
+	// returns which key is being pressed
+	// some button is being pressed
 
-	if(mills - oldMills > 0) aux = mills;
-	else aux = mills + 1000;
+	if (KEYBOARD_ROW != 0xFF)
+	{
 
-	if(aux - oldMills > 200)
-		{
-			oldMills = mills;
-			return 1;
-		}
-	return 0;
+		if (!MODEBUTTON) return MODE;
+		if (!SELECTBUTTON) return SELECT;
+		if (!INCREMENTBUTTON) return INCREMENT;
+		if (!DECREMENTBUTTON) return DECREMENT;
+	}
+	// no button is being pressed
+	return 21;
+}
+
+void printTimeDate(void)
+{
+	printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
+	printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
+}
+
+void isrTimer2() __interrupt 5
+{
+	// Polling: checks if buttons are being pressed
+
+	unsigned char key = 21;
+
+	// Sets overflow flag to 0
+	TF2 = 0;
+
+	// If no button is being pressed, state is 0
+	if(KEYBOARD_ROW == 0xFF)
+		state = 0;
+
+	// If state is 0, check if a key is being pressed
+	if(state == 0)
+	{
+		key = readKey();
+	}
+
+	// If we did read some key, sets global variables accordingly
+	if(key != 21 && state == 0)
+	{
+		state = 1;
+		if (key == MODE) modePress = 1;
+		if (key == SELECT) selectPress = 1;
+		if (key == INCREMENT) incrementPress = 1;
+		if (key == DECREMENT) decrementPress = 1;
+	}
+
 }

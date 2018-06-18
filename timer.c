@@ -83,53 +83,83 @@ void updateTime() __reentrant
         mills = 0;
 
         //Increments seconds
-        increment = incrementTime(&time[SEC], 60);
+        increment = alterTime(&time[SEC], 60, INCREMENT);
 
         //Increments minutes
-        if(increment) increment = incrementTime(&time[MIN], 60);
+        if(increment) increment = alterTime(&time[MIN], 60, INCREMENT);
 
         //Increments hours
-        if(increment) increment = incrementTime(&time[HR], 24);
+        if(increment) increment = alterTime(&time[HR], 24, INCREMENT);
 
         //Increment days
-        if(increment) increment = incrementDate(&date[DAY], monthDays[date[MON]-1], 1);
+        if(increment) increment = alterDate(&date[DAY], monthDays[date[MON]-1], 1, INCREMENT);
 
         //Increment month
-        if(increment) increment = incrementDate(&date[MON], 12, 1);
+        if(increment) increment = alterDate(&date[MON], 12, 1, INCREMENT);
 
         //Increment year
         if(increment)
         {
-            increment = incrementDate(&date[YEAR], 65535, 0);
+            increment = incrementDate(&date[YEAR], 65535, 0, INCREMENT);
             getDays(date[YEAR], monthDays);
-
         }
-
     }
 }
 
-unsigned char incrementTime(unsigned char *value, unsigned char limit)
+unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increment)
 {
-    //Increments the time
+    //Increments/decrements the time
+    // if(increment)
+    // {
+    //     *value += 1;
+    //     if(*value == limit)
+    //     {
+    //         *value = 0;
+    //         return 1;
+    //     }
+    // }
+    // else
+    // {
+    //     *value -= 1;
+    //     if(*value == 255)
+    //     {
+    //         *value = limit -1;
+    //     }
+    // }
+    // return 0;
 
-    *value += 1;
+    if(increment) *value += 1;
+    else *value -= 1;
 
     if(*value == limit)
     {
         *value = 0;
         return 1;
     }
+    else
+    {
+        if(*value == 0xFF) *value = limit -1;
+    }
     return 0;
+
 }
 
-unsigned char incrementDate(unsigned int *value, unsigned int limit, unsigned int rst)
+unsigned char alterDate(unsigned int *value, unsigned int limit, unsigned int rst, __bit increment)
 {
-    *value += 1;
+    if(increment) *value += 1;
+    else value -= 1;
 
     if(*value > limit)
     {
         *value = rst;
         return 1;
+    }
+    else
+    {
+        // Year
+        if(*value == 0xFFFF && rst == 0) *value = limit;
+        // Day and months
+        if(*value == 0 && rst == 1) *value = limit;
     }
     return 0;
 }
