@@ -47,6 +47,7 @@ unsigned char readKey()
 		if (!MODEBUTTON) return MODE;
 		if (!SELECTBUTTON) return SELECT;
 		if (!INCREMENTBUTTON) return INCREMENT;
+		if (!DECREMENTBUTTON) return DECREMENT;
 	}
 	// no button is being pressed
 	return 21;
@@ -78,6 +79,7 @@ void isrTimer2() __interrupt 5
 		if (key == MODE) modePress = 1;
 		if (key == SELECT) selectPress = 1;
 		if (key == INCREMENT) incrementPress = 1;
+		if (key == DECREMENT) decrementPress = 1;
 	}
 
 }
@@ -221,7 +223,7 @@ void clockMode()
 		&& alarm[AL_HR] == time[HR]  && alarm[AL_DAY] == date[DAY]
 		&& alarm[AL_MON] == date[MON] && alarm[AL_YEAR] == date[YEAR])
 		{
-			// Buzzes for 3 seconds
+			// Buzzes for X seconds
 			i = 0;
 			while(i <= 9)
 			{
