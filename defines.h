@@ -43,14 +43,17 @@ __bit alarmOn = 0;
 #define MODEBUTTON P1_0
 #define SELECTBUTTON P1_1
 #define INCREMENTBUTTON P1_2
+#define DECREMENTBUTTON P1_3
 
 #define MODE 0
 #define SELECT 1
 #define INCREMENT 2
+#define DECREMENT 3
 
 volatile __bit modePress = 0;
 volatile __bit selectPress = 0;
 volatile __bit incrementPress = 0;
+volatile __bit decrementPress = 0;
 __bit state = 0;
 
 // ----------------------------------------------------
