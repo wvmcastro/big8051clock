@@ -54,6 +54,9 @@ void initTimer3(void)
 	// Enables TC3 interrupt
 	EIE2 |= 0x01;
 
+    // Gives TC3 interrupt priority HIGH
+    EIP2 |= 0x01;
+
     //Change back to LEGACY_PAGE
     SFRPAGE = LEGACY_PAGE;
 }
