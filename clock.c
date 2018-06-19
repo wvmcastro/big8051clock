@@ -166,7 +166,7 @@ void clockMode()
 {
 	// Displays current time and date; "default" mode
 	__bit stay = 1;
-	unsigned char i;
+	__bit alarmBuzz;
 
 	printf_fast_f("\x01 BIG8051 CLOCK");
 
@@ -180,21 +180,24 @@ void clockMode()
 		&& alarm[AL_HR] == time[HR]  && alarm[AL_DAY] == date[DAY]
 		&& alarm[AL_MON] == date[MON] && alarm[AL_YEAR] == date[YEAR])
 		{
-			// Buzzes for X seconds
-			i = 0;
-			while(i <= 9)
+			// Buzzes until user presses decrement
+			alarmBuzz = 1;
+			while(alarmBuzz)
 			{
 				if(BUZZER != shouldBlink(500, BUZZER))
 				{
 					BUZZER = !BUZZER;
-					i++;
 
 					// makes alarm notification blinks
 					if(BUZZER) printf_fast_f("\x07 ALARM !!");
 					else printf_fast_f("\x07           ");
 				}
+				
+				// continues printing current time and date
+				printTimeDate();
+
 				// Alarm off
-				if(decrementPress) i = 10;
+				if(decrementPress) alarmBuzz = 0;
 			}
 		}
 
