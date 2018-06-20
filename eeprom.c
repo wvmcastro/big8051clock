@@ -4,7 +4,6 @@
     #include "defines.h"
 #endif
 
-
 void Timer4_ISR(void) __interrupt 16
 {
     // If the bus is locked for to long, resets the bus
@@ -162,32 +161,3 @@ int readEeprom(unsigned char deviceAddress, unsigned char memAddress, unsigned c
     return k;
 }
 
-void saveAlarm()
-{
-    int ret;
-    unsigned char i, aux[6];
-
-    for(i = 0; i < 5; i++)
-    {
-        aux[i] = (unsigned char) (alarm[i] % 256);
-    }
-    aux[5] = (unsigned char) (alarm[4] / 256);
-
-    ret = writeEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 6);
-}
-
-void readAlarm()
-{
-    int ret;
-    unsigned char i, aux[6];
-    ret = readEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 6);
-	
-    if(ret >= 0)
-    {
-        for(i = 0; i < 4; i++)
-        {
-            alarm[i] = aux[i];
-        }
-        alarm[4] = (aux[5] << 8) | aux[4];
-    }
-}

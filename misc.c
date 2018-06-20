@@ -4,11 +4,19 @@
 	#include "defines.h"
 #endif
 
-void getDays(unsigned int year, unsigned int *yearVector)
+#ifndef __EEPROM__
+	#include "eeprom.c"
+#endif
+
+#ifndef __DELAY__
+	#include "delay.c"
+#endif
+
+void getDays(unsigned int year)
 {
     /* Sets 28 or 29 days for february in the yearVector according
         to the year */
-    unsigned leapYear;
+    __bit leapYear;
     leapYear = 0;
 
     if(year % 4 == 0)
@@ -19,8 +27,9 @@ void getDays(unsigned int year, unsigned int *yearVector)
             if(year % 400 == 0) leapYear = 1;
         }
     }
-    if(leapYear) yearVector[1] = 29;
-    else yearVector[1] = 28;
+    if(leapYear) monthDays[1] = 29;
+    else monthDays[1] = 28;
+	
 }
 
 __bit shouldBlink(unsigned int t, __bit s)
@@ -93,4 +102,48 @@ void isrTimer2() __interrupt 5
 		if (key == DECREMENT) decrementPress = 1;
 	}
 
+}
+
+void saveAlarm()
+{
+    int ret;
+    unsigned char i, aux[7];
+	
+	alarm[AL_STATUS] = alarmOn;
+
+    for(i = 0; i < 6; i++)
+    {
+        aux[i] = (unsigned char) (alarm[i] % 256);
+    }
+    aux[6] = (unsigned char) (alarm[5] / 256);
+
+    ret = writeEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 7);
+}
+
+void readAlarm()
+{
+    int ret;
+    unsigned char i, aux[7];
+    ret = readEeprom(EEPROM_ADDRESS, MEM_ADDRESS, aux, 7);
+	
+    if(ret >= 0)
+    {
+        for(i = 0; i < 5; i++)
+        {
+            alarm[i] = aux[i];
+        }
+        alarm[5] = (aux[6] << 8) | aux[5];
+    }
+
+	alarmOn = alarm[AL_STATUS] & 0x01;
+
+}
+
+void beep()
+{
+	// Beeps the buzzer at 4KHz
+	BUZZER = 1;
+	delay_us(25);
+	BUZZER = 0;
+	delay_us(25);
 }

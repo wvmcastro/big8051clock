@@ -23,16 +23,17 @@ volatile unsigned int mills = 0;
 
 volatile unsigned int date[3] = {1, 1, 2000};
 volatile unsigned char time[3];
-volatile unsigned int alarm[5] = {11, 9, 16, 6, 2018 }; // ALARM[] = {MIN, HOUR, DAY, MONTH, YEAR}
+volatile unsigned int alarm[6] = {0, 11, 9, 16, 6, 2018 }; // ALARM[] = {MIN, HOUR, DAY, MONTH, YEAR}
 volatile unsigned char monthDays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 __bit alarmOn = 0;
-#define AL_YEAR 4
-#define AL_MON 3
-#define AL_DAY 2
-#define AL_HR 1
-#define AL_MIN 0
-#define BUZZER P2_7
+#define AL_YEAR		5
+#define AL_MON		4
+#define AL_DAY		3
+#define AL_HR		2
+#define AL_MIN		1
+#define AL_STATUS	0
+#define BUZZER		P2_7
 // -----------------------------------------------------------------------------
 
 // ------------------ Button defines ------------------

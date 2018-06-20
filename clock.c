@@ -37,6 +37,9 @@ void setAlarmMode();
 __bit exitMode(void)
 {
 	// Used between mode changes
+	selectPress = 0;
+	incrementPress = 0;
+	decrementPress = 0;
 	modePress = 0;
 	clearGlcd();
 	return 0;
@@ -67,8 +70,7 @@ void setTimeDateMode()
 
 		if(_blink)
 		{
-			printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
-			printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
+			printTimeDate();
 		}
 		else
 		{
@@ -142,11 +144,12 @@ void setTimeDateMode()
 			else if(timeOrDate == DATE)
 			{
 					if(param == DAY) adjust  = alterDate(&date[DAY], monthDays[date[MON]-1], 1, INCREMENT & incrementPress);
+
 					else if(param == MON) adjust = alterDate(&date[MON], 12, 1, INCREMENT & incrementPress);
 					else if(param == YEAR)
 					{
 						adjust = alterDate(&date[YEAR], 65535, 0, INCREMENT & incrementPress);
-						getDays(date[YEAR], monthDays);
+						getDays(date[YEAR]);
 					}
 			}
 			incrementPress = 0;
@@ -166,37 +169,50 @@ void clockMode()
 {
 	// Displays current time and date; "default" mode
 	__bit stay = 1;
-	unsigned char i;
+	__bit alarmBuzz, buzzerOn;
+
+	getDays(date[YEAR]);
 
 	printf_fast_f("\x01 BIG8051 CLOCK");
 
 	while(stay)
 	{
-		printf_fast_f("\x03 %2u:%2u:%2u", time[HR], time[MIN], time[SEC]);
-		printf_fast_f("\x05 %2u/%2u/%4u", date[DAY], date[MON], date[YEAR]);
+		printTimeDate();
 
 		// Checks if current time and date matches alarm time and date
 		if(alarmOn && time[SEC] == 0 && alarm[AL_MIN] == time[MIN]
 		&& alarm[AL_HR] == time[HR]  && alarm[AL_DAY] == date[DAY]
 		&& alarm[AL_MON] == date[MON] && alarm[AL_YEAR] == date[YEAR])
 		{
-			// Buzzes for X seconds
-			i = 0;
-			while(i <= 9)
+			// Buzzes until user presses decrement
+			alarmBuzz = 1;
+			buzzerOn = 1;
+			while(alarmBuzz)
 			{
-				if(BUZZER != shouldBlink(500, BUZZER))
+				if(buzzerOn != shouldBlink(500, buzzerOn))
 				{
-					BUZZER = !BUZZER;
-					i++;
-
 					// makes alarm notification blinks
-					if(BUZZER) printf_fast_f("\x07 ALARM !!");
-					else printf_fast_f("\x07           ");
+					if(buzzerOn) printf_fast_f("\x07 ALARM !!!");
+					else printf_fast_f("\x07            ");
+
+					buzzerOn = !buzzerOn;
 				}
+
+				if(buzzerOn) beep();
+				
+				// continues printing current time and date
+				printTimeDate();
+
 				// Alarm off
-				if(decrementPress) i = 10;
+				if(decrementPress)
+				{
+					alarmBuzz = 0;
+				}
 			}
+			// Cleans the alarm sign, in case it is being showed
+			printf_fast_f("\x07            ");
 		}
+		
 
 		if(modePress)
 		{
@@ -212,6 +228,7 @@ void setAlarmMode()
 	// Sets an alarm and saves it to eeprom memory
 	unsigned char param, adjust;
 	__bit cycling = 0, stay = 1, _blink = 0;
+	__bit incDec;
 
 	// At first, takes the currently saved alarm to display it
 	readAlarm();
@@ -284,15 +301,17 @@ void setAlarmMode()
 		{
 			if(cycling)
 			{
-				if(param == AL_MIN) adjust = alterTime(&alarm[AL_MIN], 60, INCREMENT & incrementPress);
-				else if(param == AL_HR) adjust = alterTime(&alarm[AL_HR], 24, INCREMENT & incrementPress);
-				else if(param == AL_DAY) adjust  = alterDate(&alarm[AL_DAY], monthDays[date[MON]-1], 1, INCREMENT & incrementPress);
-				else if(param == AL_MON) adjust = alterDate(&alarm[AL_MON], 12, 1, INCREMENT & incrementPress);
-				else if(param == AL_YEAR) adjust = alterDate(&alarm[AL_YEAR], 65535, 0, INCREMENT & incrementPress);
+				incDec = INCREMENT & incrementPress;
+				if(param == AL_MIN) adjust = alterTime(&alarm[AL_MIN], 60, incDec);
+				else if(param == AL_HR) adjust = alterTime(&alarm[AL_HR], 24, incDec);
+				else if(param == AL_DAY) adjust  = alterDate(&alarm[AL_DAY], monthDays[date[MON]-1], 1, incDec);
+				else if(param == AL_MON) adjust = alterDate(&alarm[AL_MON], 12, 1, incDec);
+				else if(param == AL_YEAR) adjust = alterDate(&alarm[AL_YEAR], 65535, 0, incDec);
 			}
 			else
 			{
 				alarmOn = !alarmOn;
+				saveAlarm();
 			}
 			incrementPress = 0;
 			decrementPress = 0;
@@ -301,7 +320,7 @@ void setAlarmMode()
 		// If mode button is pressed, leave this mode and save alarm (if ON)
 		if(modePress)
 		{
-			if(alarmOn) saveAlarm();
+			saveAlarm();
 			stay = exitMode();
 		}
 	}

@@ -101,7 +101,7 @@ void updateTime() __reentrant
         if(increment)
         {
             increment = alterDate(&date[YEAR], 65535, 0, INCREMENT);
-            getDays(date[YEAR], monthDays);
+            getDays(date[YEAR]);
         }
     }
 }

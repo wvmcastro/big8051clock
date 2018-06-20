@@ -16,8 +16,9 @@ void Reset_Sources_Init()
 void Timer_Init()
 {
     SFRPAGE   = TIMER01_PAGE;
+    TCON      = 0x10;
     TMOD      = 0x20;
-    CKCON     = 0x0A;
+    CKCON     = 0x08;
     TL1       = 0x8C;
     TH1       = 0x34;
     SFRPAGE   = TMR2_PAGE;
