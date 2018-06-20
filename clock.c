@@ -163,7 +163,6 @@ void setTimeDateMode()
 		}
 	}
 	// stay = 0 => go to next mode
-	clockMode();
 }
 
 void clockMode()
@@ -221,7 +220,6 @@ void clockMode()
 		}
 	}
 	// stay = 0 => go to next mode
-	setAlarmMode();
 }
 
 void setAlarmMode()
@@ -325,7 +323,6 @@ void setAlarmMode()
 			stay = exitMode();
 		}
 	}
-	setTimeDateMode();
 }
 
 int main(void)
@@ -340,6 +337,8 @@ int main(void)
 	while(1)
 	{
 		clockMode();
+		setAlarmMode();
+		setTimeDateMode();
 	}
 	return 0;
 }

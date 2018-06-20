@@ -13,8 +13,8 @@
 //that the overflow will occur at each 20ms with SYSCLK/12
 void initTimer3(void);
 
-unsigned char alterTime(unsigned char*, unsigned char, __bit);
-unsigned char alterDate(unsigned int*, unsigned int, unsigned int, __bit);
+unsigned char alterTime(unsigned char*, unsigned char, __bit) __reentrant;
+unsigned char alterDate(unsigned int*, unsigned int, unsigned int, __bit) __reentrant;
 
 //Updates the time
 void updateTime() __reentrant;
@@ -69,7 +69,7 @@ void isrTimer3(void) __interrupt 14
     updateTime();
 }
 
-void updateTime() __reentrant
+void updateTime()
 {
     unsigned char increment;
 
@@ -106,7 +106,7 @@ void updateTime() __reentrant
     }
 }
 
-unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increment)
+unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increment) __reentrant
 {
     // This function is made to alter the seconds, minutes and hours
     // Increments or decrements by one and resets the values when they
@@ -128,7 +128,7 @@ unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increme
 
 }
 
-unsigned char alterDate(unsigned int *value, unsigned int limit, unsigned int rst, __bit increment)
+unsigned char alterDate(unsigned int *value, unsigned int limit, unsigned int rst, __bit increment) __reentrant
 {
     // This function is made to alter the days, months and years
     // Increments or decrements by one and resets the values when they
