@@ -108,6 +108,10 @@ void updateTime() __reentrant
 
 unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increment)
 {
+    // This function is made to alter the seconds, minutes and hours
+    // Increments or decrements by one and resets the values when they
+    // cross the upper and lower limits
+
     if(increment) *value += 1;
     else *value -= 1;
 
@@ -126,6 +130,10 @@ unsigned char alterTime(unsigned char *value, unsigned char limit, __bit increme
 
 unsigned char alterDate(unsigned int *value, unsigned int limit, unsigned int rst, __bit increment)
 {
+    // This function is made to alter the days, months and years
+    // Increments or decrements by one and resets the values when they
+    // cross the upper and lower limits
+
     if(increment) *value += 1;
     else *value -= 1;
 

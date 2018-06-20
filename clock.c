@@ -53,7 +53,7 @@ void setTimeDateMode()
 	//Mode Button: confirms current parameters and exits this mode
 
 	unsigned char param, adjust;
-	__bit timeOrDate, stay, _blink;
+	__bit timeOrDate, stay, _blink, incDec;
 	timeOrDate = TIME;
 	param = SEC;
 
@@ -135,20 +135,21 @@ void setTimeDateMode()
 		}
 		if(incrementPress || decrementPress)
 		{
+			incDec = INCREMENT & incrementPress;
 			if(timeOrDate == TIME)
 			{
-				if(param == SEC) adjust = alterTime(&time[SEC], 60, INCREMENT & incrementPress);
-				else if(param == MIN) adjust = alterTime(&time[MIN], 60, INCREMENT & incrementPress);
-				else if(param == HR) adjust = alterTime(&time[HR], 24, INCREMENT & incrementPress);
+				if(param == SEC) adjust = alterTime(&time[SEC], 60, incDec);
+				else if(param == MIN) adjust = alterTime(&time[MIN], 60, incDec);
+				else if(param == HR) adjust = alterTime(&time[HR], 24, incDec);
 			}
 			else if(timeOrDate == DATE)
 			{
-					if(param == DAY) adjust  = alterDate(&date[DAY], monthDays[date[MON]-1], 1, INCREMENT & incrementPress);
+					if(param == DAY) adjust  = alterDate(&date[DAY], monthDays[date[MON]-1], 1, incDec);
 
-					else if(param == MON) adjust = alterDate(&date[MON], 12, 1, INCREMENT & incrementPress);
+					else if(param == MON) adjust = alterDate(&date[MON], 12, 1, incDec);
 					else if(param == YEAR)
 					{
-						adjust = alterDate(&date[YEAR], 65535, 0, INCREMENT & incrementPress);
+						adjust = alterDate(&date[YEAR], 65535, 0, incDec);
 						getDays(date[YEAR]);
 					}
 			}
@@ -199,7 +200,7 @@ void clockMode()
 				}
 
 				if(buzzerOn) beep();
-				
+
 				// continues printing current time and date
 				printTimeDate();
 
@@ -212,7 +213,7 @@ void clockMode()
 			// Cleans the alarm sign, in case it is being showed
 			printf_fast_f("\x07            ");
 		}
-		
+
 
 		if(modePress)
 		{
